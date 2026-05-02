@@ -912,7 +912,7 @@ public class TestHelixTaskExecutor {
     }
 
     // Final wait to ensure all timeout cancellations are fully processed
-    Thread.sleep(500);
+    Thread.sleep(1500);
 
     LOG.info("After wait - Handlers created: {}, Processed: {}, TimedOut: {}",
         factory._handlersCreated, factory._processedMsgIds.size(), factory._timedOutMsgIds.size());

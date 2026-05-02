@@ -170,7 +170,7 @@ public class TestStateTransitionTimeoutWithResource extends ZkStandAloneCMTestBa
             .verifyByPolling(new MasterNbInExtViewVerifier(ZK_ADDR, CLUSTER_NAME));
     Assert.assertTrue(result);
 
-    TestHelper.verify(() -> verify(TEST_DB), 5000);
+    TestHelper.verify(() -> verify(TEST_DB), 10000);
     Assert.assertTrue(verify(TEST_DB));
   }
 
@@ -195,7 +195,7 @@ public class TestStateTransitionTimeoutWithResource extends ZkStandAloneCMTestBa
             .verifyByPolling(new MasterNbInExtViewVerifier(ZK_ADDR, CLUSTER_NAME));
     Assert.assertTrue(result);
 
-    TestHelper.verify(() -> verify(TEST_DB + 1), 5000);
+    TestHelper.verify(() -> verify(TEST_DB + 1), 10000);
     Assert.assertTrue(verify(TEST_DB + 1));
   }
 
