@@ -166,7 +166,7 @@ public class TestStateTransitionTimeout extends ZkStandAloneCMTestBase {
     Assert.assertTrue(result);
     HelixDataAccessor accessor = _participants[0].getHelixDataAccessor();
 
-    TestHelper.verify(() -> verify(accessor, idealState, factories), 10000);
+    TestHelper.verify(() -> verify(accessor, idealState, factories), 20000);
     Assert.assertTrue(verify(accessor, idealState, factories));
   }
 

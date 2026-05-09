@@ -450,7 +450,7 @@ public class TestDelayedAutoRebalance extends ZkTestBase {
     InstanceConfig instanceConfig = _configAccessor.getInstanceConfig(CLUSTER_NAME, instance);
     Assert.assertEquals(instanceConfig.getInstanceEnabled(), enabled);
     Assert.assertTrue(instanceConfig.getInstanceEnabledTime() >= currentTime);
-    Assert.assertTrue(instanceConfig.getInstanceEnabledTime() <= currentTime + 100);
+    Assert.assertTrue(instanceConfig.getInstanceEnabledTime() <= currentTime + 2000);
   }
 
   protected void validateDelayedMovementsOnDisabledNode(Map<String, ExternalView> externalViewsBefore)

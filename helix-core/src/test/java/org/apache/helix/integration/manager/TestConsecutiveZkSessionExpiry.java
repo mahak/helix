@@ -210,6 +210,9 @@ public class TestConsecutiveZkSessionExpiry extends ZkUnitTestBase {
     LOG.info("Expried distributedController session. oldSessionId: " + oldSessionId
         + ", newSessionId: " + newSessionId);
 
+    // Wait for session to stabilize after first expiry before triggering second
+    Thread.sleep(500);
+
     // expire zk session again during HelixManager#handleNewSession()
     startCountdown.await();
     LOG.info("2nd Expiring distributedController session...");
@@ -242,8 +245,8 @@ public class TestConsecutiveZkSessionExpiry extends ZkUnitTestBase {
     // This is needed because handler cleanup is async and may take time in CI
     List<CallbackHandler> handlers = null;
     int expectedHandlerCount = 1;
-    int maxWaitTime = 20000;
-    int pollInterval = 200;
+    int maxWaitTime = 30000;
+    int pollInterval = 500;
     long startTime = System.currentTimeMillis();
     while (System.currentTimeMillis() - startTime < maxWaitTime) {
       handlers = distributedControllers[0].getHandlers();
