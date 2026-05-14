@@ -1064,6 +1064,49 @@ public class TestInstanceOperation extends ZkTestBase {
 
     Assert.assertTrue(_clusterVerifier.verifyByPolling());
 
+    // Ensure swap is fully processed after maintenance mode ends
+    // During maintenance mode, EV updates are deferred. After exiting, we need to wait
+    // for the controller to compute and propagate the new ideal state assignment.
+    long swapWaitStartTime = System.currentTimeMillis();
+    long maxSwapWaitTime = 30000;
+    boolean swapProcessed = false;
+    while (System.currentTimeMillis() - swapWaitStartTime < maxSwapWaitTime) {
+      Map<String, ExternalView> currentEVs = getEVs();
+      boolean allReplaced = true;
+      for (String resource : originalEVs.keySet()) {
+        ExternalView current = currentEVs.get(resource);
+        ExternalView original = originalEVs.get(resource);
+        if (current == null || original == null) {
+          allReplaced = false;
+          break;
+        }
+        for (String partition : original.getPartitionSet()) {
+          Map<String, String> currentStateMap = current.getStateMap(partition);
+          Map<String, String> originalStateMap = original.getStateMap(partition);
+          // Check if swapOut is still in EV with higher state than expected
+          if (currentStateMap.containsKey(swapOutName)) {
+            String currentState = currentStateMap.get(swapOutName);
+            String originalState = originalStateMap.get(swapOutName);
+            if (currentState.equals(originalState) && "LEADER".equals(currentState)) {
+              // swapOut still has its original (higher) state - not yet replaced
+              allReplaced = false;
+              break;
+            }
+          }
+        }
+        if (!allReplaced) break;
+      }
+      if (allReplaced) {
+        swapProcessed = true;
+        LOG.info("Swap processed after {} ms", System.currentTimeMillis() - swapWaitStartTime);
+        break;
+      }
+      Thread.sleep(500);
+    }
+    if (!swapProcessed) {
+      LOG.warn("Swap may not have been fully processed within {} ms", maxSwapWaitTime);
+    }
+
     // Verify swap-in has the same partitions swap-out had
     boolean swapValid = TestHelper.verify(() ->
         validateEVsCorrect(getEVs(), originalEVs, swapOutToSwapIn,
@@ -1078,6 +1121,43 @@ public class TestInstanceOperation extends ZkTestBase {
         VERIFICATION_TIMEOUT);
     LOG.info("isEvacuateFinished: {}", evacFinished);
     Assert.assertTrue(evacFinished, "Evacuation should be finished");
+
+    // Wait for EV state assignments to stabilize after evacuation completes
+    // isEvacuateFinished checks current states/messages but EV may lag behind
+    Map<String, ExternalView> evSnapshot = getEVs();
+    int maxWaitTime = 10000;
+    int pollInterval = 500;
+    long startTime = System.currentTimeMillis();
+    boolean stable = false;
+    while (System.currentTimeMillis() - startTime < maxWaitTime) {
+      Map<String, ExternalView> currentEVs = getEVs();
+      boolean allMatch = true;
+      for (String resource : evSnapshot.keySet()) {
+        ExternalView current = currentEVs.get(resource);
+        ExternalView snapshot = evSnapshot.get(resource);
+        if (current == null || snapshot == null) {
+          allMatch = false;
+          break;
+        }
+        for (String partition : snapshot.getPartitionSet()) {
+          if (!current.getStateMap(partition).equals(snapshot.getStateMap(partition))) {
+            allMatch = false;
+            break;
+          }
+        }
+        if (!allMatch) break;
+      }
+      if (allMatch) {
+        stable = true;
+        LOG.info("EV state assignments stabilized after {} ms", System.currentTimeMillis() - startTime);
+        break;
+      }
+      evSnapshot = currentEVs;
+      Thread.sleep(pollInterval);
+    }
+    if (!stable) {
+      LOG.warn("EV did not stabilize within {} ms after evacuation", maxWaitTime);
+    }
 
     // Set evacuate instance to UNKNOWN
     LOG.info("Setting UNKNOWN on evacuate instance");
