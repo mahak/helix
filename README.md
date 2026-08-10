@@ -50,3 +50,9 @@ Helix is a generic cluster management framework used for automatic management of
 5. Pluggable distributed state machine to manage the state of a resource via state transitions
 6. Automatic load balancing and throttling of transitions 
 
+## Helix Gateway Service (2.0)
+
+Helix 2.0 adds the [Helix Gateway Service](website/2.0.1/src/site/markdown/tutorial_gateway.md), which lets an application join a Helix-managed cluster over gRPC without embedding the Helix library or opening its own ZooKeeper connection. The embedded participant model from 1.x is unchanged and remains fully supported.
+
+![Helix 1.x embedded participants compared with the Helix 2.0 Gateway service](website/2.0.1/src/site/resources/images/gateway/gateway-topology-comparison.png)
+
