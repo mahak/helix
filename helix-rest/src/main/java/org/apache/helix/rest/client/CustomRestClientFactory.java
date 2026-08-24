@@ -25,7 +25,6 @@ import org.apache.helix.rest.server.HelixRestServer;
 import org.apache.helix.util.HelixUtil;
 import org.apache.http.client.HttpClient;
 import org.apache.http.client.config.RequestConfig;
-import org.apache.http.conn.ssl.NoopHostnameVerifier;
 import org.apache.http.conn.ssl.SSLConnectionSocketFactory;
 import org.apache.http.impl.client.HttpClientBuilder;
 import org.apache.http.impl.client.HttpClients;
@@ -60,7 +59,8 @@ public class CustomRestClientFactory {
               httpClient =
                   HttpClients.custom().setSSLContext(HelixRestServer.REST_SERVER_SSL_CONTEXT)
                       .setSSLSocketFactory(new SSLConnectionSocketFactory(
-                          HelixRestServer.REST_SERVER_SSL_CONTEXT, new NoopHostnameVerifier()))
+                          HelixRestServer.REST_SERVER_SSL_CONTEXT,
+                          SSLConnectionSocketFactory.getDefaultHostnameVerifier()))
                       .setDefaultRequestConfig(config).build();
             } else {
               httpClient = HttpClientBuilder.create().setDefaultRequestConfig(config).build();
